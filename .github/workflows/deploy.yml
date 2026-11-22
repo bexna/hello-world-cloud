@@ -1,0 +1,35 @@
+name: Deploy to OCI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: vars.OCI_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy latest main commit to OCI
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+          OCI_SSH_KEY: ${{ secrets.OCI_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$OCI_HOST"
+          test -n "$OCI_USER"
+          test -n "$OCI_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$OCI_SSH_KEY" > ~/.ssh/oci_deploy_key
+          chmod 600 ~/.ssh/oci_deploy_key
+          ssh-keyscan -H "$OCI_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/oci_deploy_key "$OCI_USER@$OCI_HOST" \
+            'set -e; cd /opt/hello-world; git fetch origin main; git reset --hard origin/main; systemctl restart hello-world; systemctl is-active --quiet hello-world'

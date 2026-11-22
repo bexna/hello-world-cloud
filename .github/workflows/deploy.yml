@@ -19,13 +19,11 @@ jobs:
     steps:
       - name: Deploy latest main commit to OCI
         env:
-          OCI_HOST: ${{ secrets.OCI_HOST }}
-          OCI_USER: ${{ secrets.OCI_USER }}
+          OCI_HOST: 141.148.61.244
+          OCI_USER: opc
           OCI_SSH_KEY: ${{ secrets.OCI_SSH_KEY }}
         run: |
           set -euo pipefail
-          test -n "$OCI_HOST"
-          test -n "$OCI_USER"
           test -n "$OCI_SSH_KEY"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$OCI_SSH_KEY" > ~/.ssh/oci_deploy_key
